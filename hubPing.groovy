@@ -125,15 +125,15 @@ def sendPing(ipAddress){
     if(numPings == null) numPings = 3
     configure()
     updateAttr("lastIpAddress", ipAddress)
-    if(textLoggingEnabled) log.debug "Ping initiated for $ipAddress"
+    if(textLoggingEnabled) log.info "Ping initiated for $ipAddress"
     if(!validIP (ipAddress)) {
-        if(textLoggingEnabled) log.debug "IP address $ipAddress failed pattern check - ping request terminated"
+        if(textLoggingEnabled) log.error "IP address $ipAddress failed pattern check - ping request terminated"
         updateAttr("pingReturn", "IP address format invalid")
         updateAttr("presence","not present")
         updateAttr("responseReady","true")
     } else {
         if (location.hub.firmwareVersionString > "2.2.6.140" && !useOldMethod){
-            if(textLoggingEnabled) log.debug "Hub internal ping method selected"
+            if(textLoggingEnabled) log.info "Hub internal ping method selected"
             updateAttr("responseReady",false)
             if(!presenceOnly)
                 updateAttr("pingReturn","Pinging $ipAddress") 
@@ -146,7 +146,7 @@ def sendPing(ipAddress){
             if(!presenceOnly)                
                 updateAttr("percentLoss", pingData.packetLoss,"%")
             String pingStats = "Transmitted: ${pingData.packetsTransmitted}, Received: ${pingData.packetsReceived}, %Lost: ${pingData.packetLoss}"
-            if(textLoggingEnabled) log.debug "Ping Stats: $pingStats"
+            if(textLoggingEnabled) log.info "Ping Stats: $pingStats"
             if(!presenceOnly){
                 updateAttr("pingStats", pingStats) 
                 updateAttr("min",pingData.rttMin,"ms")
@@ -158,17 +158,17 @@ def sendPing(ipAddress){
                 updateAttr("pingReturn",pingData)
             }
             if (pingData.packetLoss < 100) {
-                if(textLoggingEnabled) log.debug "Presence set to 'present' for $ipAddress"
+                if(textLoggingEnabled) log.info "Presence set to 'present' for $ipAddress"
                 updateAttr("presence","present")
             } else {
-                if(textLoggingEnabled) log.debug "Presence set to 'not present' for $ipAddress"
+                if(textLoggingEnabled) log.info "Presence set to 'not present' for $ipAddress"
                 updateAttr("presence","not present")
             }
             updateAttr("responseReady","true")
 	        if(pingPeriod > 0) runIn(pingPeriod, "sendPing", [data:ipAddress])
-            if(textLoggingEnabled && pingPeriod > 0) log.debug "Next ping for $ipAddress scheduled in $pingPeriod seconds"
+            if(textLoggingEnabled && pingPeriod > 0) log.info "Next ping for $ipAddress scheduled in $pingPeriod seconds"
         } else {
-            if(textLoggingEnabled) log.debug "Hub Endpoint ping method selected"
+            if(textLoggingEnabled) log.info "Hub Endpoint ping method selected"
             if(security) {
                 httpPost(
                     [
@@ -217,7 +217,7 @@ def sendPingHandler(resp, data) {
     if (!errFlag) extractValues(strWork)
     ipAddress = device.currentValue("lastIpAddress")
     if(pingPeriod > 0) runIn(pingPeriod, "sendPing", [data:ipAddress])
-    if(textLoggingEnabled && pingPeriod > 0) log.debug "Next ping scheduled for $ipAddress in $pingPeriod seconds"
+    if(textLoggingEnabled && pingPeriod > 0) log.info "Next ping scheduled for $ipAddress in $pingPeriod seconds"
 
 }
 
@@ -228,7 +228,7 @@ def extractValues(strWork) {
         startInx = strWork.indexOf("%")
     if(debubEnable)log.debug startInx
     if (startInx == -1){
-        if(textLoggingEnabled) log.debug "Invalid response received from endpoint"
+        if(textLoggingEnabled) log.error "Invalid response received from endpoint"
         if(!presenceOnly){
             updateAttr("percentLoss",100,"%")
             updateAttr("pingStats"," ") 
@@ -250,7 +250,7 @@ def extractValues(strWork) {
         
         startInx = strWork.indexOf("=")
         pingStats= strWork.substring(startInx+2,strWork.length()-4).tokenize("/")
-        if(textLoggingEnabled) log.debug "Ping Stats: $pingStats"
+        if(textLoggingEnabled) log.info "Ping Stats: $pingStats"
         if(!presenceOnly){
             updateAttr("pingStats",pingStats) 
             updateAttr("min",pingStats[0]," ms")
@@ -261,10 +261,10 @@ def extractValues(strWork) {
     }
     if (percentLoss < 100 ) {
         updateAttr("presence","present")
-        if(textLoggingEnabled) log.debug "Presence set to 'present' for $ipAddress"
+        if(textLoggingEnabled) log.info "Presence set to 'present' for $ipAddress"
     } else {
         updateAttr("presence","not present")
-        if(textLoggingEnabled) log.debug "Presence set to 'not present' for $ipAddress"
+        if(textLoggingEnabled) log.info "Presence set to 'not present' for $ipAddress"
     }
     updateAttr("responseReady", "true")
 }
